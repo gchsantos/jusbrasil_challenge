@@ -1,3 +1,5 @@
+from typing import List, Union
+
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json, LetterCase
 
@@ -7,8 +9,14 @@ from jusbrasil_challenge.messages import ReturnBaseMessage
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
 class BatchInsertDataMessage:
-    cnj: str
+    cnjs: Union[List[str], str]
     refresh_lawsuit: bool = False
+
+    def __init__(self, **kwargs):
+        self.cnjs = (
+            [kwargs["cnjs"]] if isinstance(kwargs.get("cnjs"), str) else kwargs["cnjs"]
+        )
+        self.refresh_lawsuit = kwargs.get("refresh_lawsuit")
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
