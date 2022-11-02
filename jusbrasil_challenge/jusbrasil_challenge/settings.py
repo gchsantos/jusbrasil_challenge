@@ -126,3 +126,12 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser"),
 }
+
+MQ_SETTINGS = {
+    "host": env("MQ_HOST"),
+    "port": env("MQ_PORT", default="5672"),
+    "credentials": {
+        "user": env("MQ_USER"),
+        "password": env("MQ_PASS"),
+    },
+}
