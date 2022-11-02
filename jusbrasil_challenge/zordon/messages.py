@@ -11,12 +11,14 @@ from jusbrasil_challenge.messages import ReturnBaseMessage
 class BatchInsertDataMessage:
     cnjs: Union[List[str], str]
     refresh_lawsuit: bool = False
+    public_consultation: bool = False
 
     def __init__(self, **kwargs):
         self.cnjs = (
             [kwargs["cnjs"]] if isinstance(kwargs.get("cnjs"), str) else kwargs["cnjs"]
         )
         self.refresh_lawsuit = kwargs.get("refresh_lawsuit")
+        self.public_consultation = kwargs.get("public_consultation")
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)

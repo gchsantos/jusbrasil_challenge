@@ -10,7 +10,7 @@ from dacite import from_dict
 from dacite.exceptions import MissingValueError
 
 from .messages import BatchInsertDataMessage, BatchInsertReturnDataMessage
-from .models import BatchGenerator
+from .models import BatchGenerator, BatchLine
 from .exceptions import UnsupportedCNJException, MissingValueException, BaseException
 from .utils.cnj_utils import get_uf_by_cnj
 from .types import GeneratorCnjs
@@ -49,9 +49,11 @@ class BatchManager(APIView):
                     refresh_lawsuit=insert_message.refresh_lawsuit,
                     user=request.user,
                 )
-                generator.generate(generator_cnjs)
+                generator.generate(generator_cnjs, insert_message.public_consultation)
 
-            return_message = json.loads(BatchInsertReturnDataMessage(1).to_json())
+            return_message = json.loads(
+                BatchInsertReturnDataMessage(generator.consultation.id).to_json()
+            )
             return Response(return_message, status=status.HTTP_200_OK)
 
         except MissingValueError as e:

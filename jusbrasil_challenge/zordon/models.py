@@ -16,11 +16,16 @@ class BatchGenerator(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def generate(cls, cnjs: List[GeneratorCnjs]):
+    def generate(self, cnjs: List[GeneratorCnjs], public_consultation: bool):
         for gen_cnj in cnjs:
             BatchLine.objects.create(
-                cnj=gen_cnj["cnj"], uf=gen_cnj["uf"], generator=cls
+                cnj=gen_cnj["cnj"], uf=gen_cnj["uf"], generator=self
             )
+
+        BatchConsultation.objects.create(generator=self, public=public_consultation)
+
+    def has_finished(self) -> bool:
+        return False if self.batch_lines.filter(status=LINE_STATUS.PENDING) else True
 
 
 class BatchLine(models.Model):
@@ -28,10 +33,21 @@ class BatchLine(models.Model):
     cnj = models.CharField(max_length=25)
     uf = models.CharField(max_length=3)
     generator = models.ForeignKey(
-        BatchGenerator, on_delete=models.CASCADE, related_name="batch_lines"
+        BatchGenerator, on_delete=models.CASCADE, related_name="lines"
     )
     status = models.SmallIntegerField(
         choices=LINE_STATUS.get_status(), default=LINE_STATUS.PENDING
     )
     created_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True)
+
+    def get_line_status(self) -> LINE_STATUS:
+        return LINE_STATUS(self.status).name
+
+
+class BatchConsultation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    generator = models.OneToOneField(
+        BatchGenerator, on_delete=models.CASCADE, related_name="consultation"
+    )
+    public = models.BooleanField(default=False)
