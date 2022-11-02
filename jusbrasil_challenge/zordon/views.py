@@ -26,23 +26,23 @@ class BatchManager(APIView):
             )
             generator_cnjs: List[GeneratorCnjs] = list()
 
-            try:
-                for cnj in insert_message.cnjs:
+            for cnj in insert_message.cnjs:
+                try:
                     uf = get_uf_by_cnj(cnj)
                     if not uf:
-                        raise UnsupportedCNJException(insert_message.cnjs)
-                    generator_cnjs.append({"cnj": cnj, "uf": uf})
+                        raise UnsupportedCNJException(cnj)
 
-            except (UnsupportedCNJException, ValueError) as e:
-                message = (
-                    e.message
-                    if hasattr(e, "message")
-                    else UnsupportedCNJException(insert_message.cnjs).message
-                )
-                return Response(
-                    message,
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+                    generator_cnjs.append({"cnj": cnj, "uf": uf})
+                except (UnsupportedCNJException, ValueError) as e:
+                    message = (
+                        e.message
+                        if hasattr(e, "message")
+                        else UnsupportedCNJException(cnj).message
+                    )
+                    return Response(
+                        message,
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
             with transaction.atomic():
                 generator = BatchGenerator.objects.create(
