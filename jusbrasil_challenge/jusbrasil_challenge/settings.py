@@ -1,14 +1,18 @@
-from pathlib import Path
+import environ
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = environ.Path(__file__) - 3
 
+# Initialise environment variables
+env = environ.Env()
+env.read_env(BASE_DIR(".env"))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure--n^2)m36f)9q%&k)rd+modpybs**i&e(g)lcxwpg=z&_fse77p"  # TODO: esconder secret
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -64,13 +68,13 @@ WSGI_APPLICATION = "jusbrasil_challenge.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATABASES = {  # TODO: Criar .env para credenciais
+DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "jusbrasil_challenge",
-        "USER": "gchsantos",
-        "PASSWORD": "itawesome",
-        "HOST": "localhost",
+        "NAME": env("DATABASE_NAME"),
+        "USER": env("DATABASE_USER"),
+        "PASSWORD": env("DATABASE_PASS"),
+        "HOST": env("DATABASE_HOST"),
     }
 }
 
