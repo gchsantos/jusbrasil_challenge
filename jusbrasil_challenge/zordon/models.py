@@ -18,17 +18,17 @@ class BatchGenerator(models.Model):
 
     def generate(cls, cnjs: List[GeneratorCnjs]):
         for gen_cnj in cnjs:
-            GeneratorLine.objects.create(
+            BatchLine.objects.create(
                 cnj=gen_cnj["cnj"], uf=gen_cnj["uf"], generator=cls
             )
 
 
-class GeneratorLine(models.Model):
+class BatchLine(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     cnj = models.CharField(max_length=25)
     uf = models.CharField(max_length=3)
     generator = models.ForeignKey(
-        BatchGenerator, on_delete=models.CASCADE, related_name="batch_line"
+        BatchGenerator, on_delete=models.CASCADE, related_name="batch_lines"
     )
     status = models.SmallIntegerField(
         choices=LINE_STATUS.get_status(), default=LINE_STATUS.PENDING
