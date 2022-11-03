@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework.authtoken",
+    "django_celery_results",
     "zordon",
 ]
 
@@ -135,3 +136,14 @@ MQ_SETTINGS = {
         "password": env("MQ_PASS"),
     },
 }
+
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_CACHE_BACKEND = "django-cache"
+CELERY_TIMEZONE = "America/Sao_Paulo"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_BROKER_URL = f'amqp://{MQ_SETTINGS["credentials"]["user"]}:{MQ_SETTINGS["credentials"]["password"]}@{MQ_SETTINGS["host"]}//'
+CELERY_TASK_RESULT_EXPIRES = 18000
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_RESULT_EXTENDED = True
