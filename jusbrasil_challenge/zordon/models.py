@@ -1,12 +1,11 @@
 import uuid
 from typing import List, Dict
-import json
 
 from django.db import models
 from django.contrib.auth.models import User
 
 from .constants import LINE_STATUS
-from .batch_queue_manager import BatchQueueManager
+from robots.core.constants import ROBOTS_HANDLER_MAP
 
 
 class BatchGenerator(models.Model):
@@ -20,7 +19,6 @@ class BatchGenerator(models.Model):
     def generate(
         self, generator_cnjs: Dict[str, List["BatchLine"]], public_consultation: bool
     ):
-        batch_queue_manager = BatchQueueManager()
         grouped_batch_lines: Dict[str, List[BatchLine]] = dict()
 
         for uf in generator_cnjs:
@@ -28,13 +26,12 @@ class BatchGenerator(models.Model):
             grouped_batch_lines[uf] = BatchLine.objects.bulk_create(generator_cnjs[uf])
 
         for uf in grouped_batch_lines:
-            message = json.dumps(
-                [
-                    {"cnj": batch_line.cnj, "batch_line_id": str(batch_line.id)}
-                    for batch_line in grouped_batch_lines[uf]
-                ]
-            )
-            batch_queue_manager.send_batch_message(message, uf)
+            [
+                ROBOTS_HANDLER_MAP[uf].delay(
+                    batch_line.cnj, batch_line.id, self.user.id
+                )
+                for batch_line in grouped_batch_lines[uf]
+            ]
 
         BatchConsultation.objects.create(generator=self, public=public_consultation)
 
