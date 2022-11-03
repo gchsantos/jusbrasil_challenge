@@ -5,7 +5,7 @@ from jusbrasil_challenge.exceptions import BaseException
 from jusbrasil_challenge.messages import ErrorMessage
 
 
-logg = logging.getLogger("zordon.exceptions")
+logg = logging.getLogger(__name__)
 
 
 class MissingValueException(BaseException):

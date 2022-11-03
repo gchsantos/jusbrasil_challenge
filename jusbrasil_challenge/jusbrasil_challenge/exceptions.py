@@ -3,7 +3,7 @@ import json
 
 from jusbrasil_challenge.messages import ErrorMessage
 
-logg = logging.getLogger("jusbrasil_challenge.exceptions")
+logg = logging.getLogger(__name__)
 
 
 class BaseException(Exception):
