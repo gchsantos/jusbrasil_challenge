@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Dict
 
 from django.db import transaction
 from rest_framework.views import APIView
@@ -13,7 +13,6 @@ from .messages import BatchInsertDataMessage, BatchInsertReturnDataMessage
 from .models import BatchGenerator, BatchLine
 from .exceptions import UnsupportedCNJException, MissingValueException, BaseException
 from .utils.cnj_utils import get_uf_by_cnj
-from .types import GeneratorCnjs
 
 
 class BatchManager(APIView):
@@ -24,7 +23,7 @@ class BatchManager(APIView):
             insert_message = from_dict(
                 data_class=BatchInsertDataMessage, data=request.data
             )
-            generator_cnjs: List[GeneratorCnjs] = list()
+            generator_cnjs: Dict[str, List[BatchLine]] = dict()
 
             for cnj in insert_message.cnjs:
                 try:
@@ -32,7 +31,7 @@ class BatchManager(APIView):
                     if not uf:
                         raise UnsupportedCNJException(cnj)
 
-                    generator_cnjs.append({"cnj": cnj, "uf": uf})
+                    generator_cnjs.setdefault(uf, []).append(BatchLine(cnj=cnj, uf=uf))
                 except (UnsupportedCNJException, ValueError) as e:
                     message = (
                         e.message

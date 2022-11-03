@@ -1,11 +1,12 @@
 import uuid
-from typing import List
+from typing import List, Dict
+import json
 
 from django.db import models
 from django.contrib.auth.models import User
 
 from .constants import LINE_STATUS
-from .types import GeneratorCnjs
+from .batch_queue_manager import BatchQueueManager
 
 
 class BatchGenerator(models.Model):
@@ -16,11 +17,24 @@ class BatchGenerator(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def generate(self, cnjs: List[GeneratorCnjs], public_consultation: bool):
-        for gen_cnj in cnjs:
-            BatchLine.objects.create(
-                cnj=gen_cnj["cnj"], uf=gen_cnj["uf"], generator=self
+    def generate(
+        self, generator_cnjs: Dict[str, List["BatchLine"]], public_consultation: bool
+    ):
+        batch_queue_manager = BatchQueueManager()
+        grouped_batch_lines: Dict[str, List[BatchLine]] = dict()
+
+        for uf in generator_cnjs:
+            [setattr(gen_cnj, "generator", self) for gen_cnj in generator_cnjs[uf]]
+            grouped_batch_lines[uf] = BatchLine.objects.bulk_create(generator_cnjs[uf])
+
+        for uf in grouped_batch_lines:
+            message = json.dumps(
+                [
+                    {"cnj": batch_line.cnj, "batch_line_id": str(batch_line.id)}
+                    for batch_line in grouped_batch_lines[uf]
+                ]
             )
+            batch_queue_manager.send_batch_message(message, uf)
 
         BatchConsultation.objects.create(generator=self, public=public_consultation)
 

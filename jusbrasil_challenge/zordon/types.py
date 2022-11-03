@@ -3,4 +3,4 @@ from typing import TypedDict
 
 class GeneratorCnjs(TypedDict):
     cnj: str
-    uf: str
+    batch_line_id: str
