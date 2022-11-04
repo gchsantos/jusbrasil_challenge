@@ -30,7 +30,7 @@ class RobotAL(EsajCaptureRobot):
 
 @shared_task(bind=True, base=BaseTaskWithRetry)
 def capture_task(self, cnj: str, batch_line_id: str, uid: str):
-    from zordon.models import BatchLine, Lawsuit
+    from zordon.models import BatchLine, LawsuitGenerator
 
     self.update_state(state="STARTED", meta={"user_id": uid})
     status, lawsuit_datas = RobotAL().capture_pipeline(cnj)
@@ -39,16 +39,21 @@ def capture_task(self, cnj: str, batch_line_id: str, uid: str):
         with transaction.atomic():
             for lawsuit_data in lawsuit_datas:
                 instance = lawsuit_data["instance"]
-                lawsuit: RefinedLawsuitData = lawsuit_data["capture_response"]
-                lawsuit = Lawsuit.objects.create(
+                refinned_lawsuit: RefinedLawsuitData = lawsuit_data["capture_response"]
+                lawsuit_generator = LawsuitGenerator.objects.create(
                     batch_line_id=batch_line_id,
                     instance=instance,
-                    value=lawsuit.value,
-                    lawsuit_class=lawsuit.lawsuit_class,
-                    subject=lawsuit.subject,
-                    distribution=lawsuit.distribution,
-                    area=lawsuit.area,
-                    judge=lawsuit.judge,
+                    value=refinned_lawsuit.value,
+                    lawsuit_class=refinned_lawsuit.lawsuit_class,
+                    subject=refinned_lawsuit.subject,
+                    distribution=refinned_lawsuit.distribution,
+                    area=refinned_lawsuit.area,
+                    judge=refinned_lawsuit.judge,
+                )
+
+                lawsuit_generator.generate(
+                    refinned_lawsuit.progress_table,
+                    refinned_lawsuit.concerned_parties_table,
                 )
 
         BatchLine.objects.get(id=batch_line_id).update_status(status)

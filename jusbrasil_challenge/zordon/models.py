@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 
 from .constants import LINE_STATUS
 from robots.core.constants import ROBOTS_HANDLER_MAP
-from robots.core.dataclasses import RefinedLawsuitData
+from robots.core.dataclasses import LawsuitProgress, LawsuitConcernedParts
 
 
 class BatchGenerator(models.Model):
@@ -70,7 +70,7 @@ class BatchConsultation(models.Model):
     public = models.BooleanField(default=False)
 
 
-class Lawsuit(models.Model):
+class LawsuitGenerator(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     batch_line = models.ForeignKey(
         BatchLine, on_delete=models.CASCADE, related_name="lawsuits"
@@ -83,11 +83,41 @@ class Lawsuit(models.Model):
     area = models.TextField(null=True)
     judge = models.TextField(null=True)
 
+    def generate(
+        self,
+        lawsuit_progress: List[LawsuitProgress],
+        lawsuit_concerned_parts: List[LawsuitConcernedParts],
+    ):
+        bulk_progress = []
+        for progress in lawsuit_progress:
+            bulk_progress.append(
+                LawsuitProgress(
+                    date=progress.date,
+                    description=progress.description,
+                    lawsuit=self,
+                )
+            )
+        LawsuitProgress.objects.bulk_create(bulk_progress)
+
+        for parts in lawsuit_concerned_parts:
+            part = LawsuitPart.objects.create(
+                lawsuit=self,
+                participation=parts.participation,
+                person=parts.person,
+            )
+
+            bulk_lawyers = []
+            for lawyer in parts.lawyers:
+                bulk_lawyers.append(
+                    LawsuitRelatedPart(related_part=part, person=lawyer)
+                )
+            LawsuitRelatedPart.objects.bulk_create(bulk_lawyers)
+
 
 class LawsuitProgress(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     lawsuit = models.ForeignKey(
-        Lawsuit, on_delete=models.CASCADE, related_name="movements"
+        LawsuitGenerator, on_delete=models.CASCADE, related_name="movements"
     )
     date = models.TextField(null=True)
     description = models.TextField(null=True)
@@ -95,7 +125,9 @@ class LawsuitProgress(models.Model):
 
 class LawsuitPart(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    lawsuit = models.ForeignKey(Lawsuit, on_delete=models.CASCADE, related_name="parts")
+    lawsuit = models.ForeignKey(
+        LawsuitGenerator, on_delete=models.CASCADE, related_name="parts"
+    )
     participation = models.TextField(null=True)
     person = models.TextField(null=True)
 
