@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Tuple, Union, List, Dict
 
 import requests
 from bs4 import BeautifulSoup
@@ -13,34 +13,73 @@ logger = get_task_logger(__name__)
 
 
 class EsajCaptureRobot:
-    def __init__(self, url, search_url: str, **kwargs) -> None:
+    def __init__(self, instances_urls: list, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.url = url
-        self.search_url = search_url
+        self.instances_urls = instances_urls
 
-    def capture_pipeline(self, cnj: str):
+    def capture_pipeline(self, cnj: str) -> Tuple[LINE_STATUS, List[Dict]]:
+        lawsuit_datas = []
         try:
-            session = self.get_session()
-            headers = self.generate_header(session)
-            search_response = self.search_lawsuit_by_cnj(cnj, headers)
-            return self.scrape_lawsuit_data(search_response)
+            search_responses = []
+            for instance in self.instances_urls:
+                if instance["instance"] == 1:
+                    session = self.get_first_instance_session(instance["url"])
+                    headers = self.generate_header(session)
+
+                    show_url = f"{instance['show_url']}{cnj}"
+                    search_responses.append(
+                        (
+                            instance["instance"],
+                            self.get_lawsuit_by_show_url(show_url, headers),
+                        )
+                    )
+
+                elif instance["instance"] == 2:
+                    url = f"{instance['url']}{cnj}"
+                    session, codes = self.get_second_instance_session_and_codes(url)
+                    headers = self.generate_header(session)
+
+                    for code in codes:
+                        show_url = f"{instance['show_url']}{code}"
+                        search_response = self.get_lawsuit_by_show_url(
+                            show_url, headers
+                        )
+                        search_responses.append(
+                            (
+                                instance["instance"],
+                                self.get_lawsuit_by_show_url(show_url, headers),
+                            )
+                        )
+
+            for instance, search_response in search_responses:
+                status, capture_response = self.scrape_lawsuit_data(search_response)
+                if status == LINE_STATUS.SUCCESS:
+                    lawsuit_datas.append(
+                        {
+                            "instance": instance,
+                            "capture_response": capture_response,
+                        }
+                    )
+
+            return (
+                LINE_STATUS.SUCCESS if lawsuit_datas else LINE_STATUS.NOT_FOUND,
+                lawsuit_datas,
+            )
 
         except CreateSessionFailedException:
             raise
         except Exception as e:
             raise BaseCaptureException(e)
 
-    def append_search_url(self, cnj):
-        return f"{self.search_url}{cnj}"
-
-    def get_session(self) -> str:
+    def get_first_instance_session(self, url) -> str:
         try:
-            response = requests.get(self.url)
+            response = requests.get(url)
             response.raise_for_status()
 
             for cookie in response.cookies:
                 if "sessionid" in cookie.name.lower():
                     return cookie.value
+            raise Exception("Failed to capture session_id")
         except Exception as e:
             raise CreateSessionFailedException(e)
 
@@ -50,9 +89,10 @@ class EsajCaptureRobot:
             "Cookie": f"JSESSIONID={session}",
         }
 
-    def search_lawsuit_by_cnj(self, cnj: str, headers: dict) -> requests.Response:
-        search_url = self.append_search_url(cnj)
-        response = requests.get(search_url, headers)
+    def get_lawsuit_by_show_url(
+        self, show_url: str, headers: dict
+    ) -> requests.Response:
+        response = requests.get(show_url, headers)
         return response
 
     def scrape_lawsuit_data(
@@ -67,14 +107,41 @@ class EsajCaptureRobot:
         ):
             return LINE_STATUS.NOT_FOUND, None
 
+        judge = soup.find(id="juizProcesso")
+
         refined_lawsuit = RefinedLawsuitData(
             value=soup.find(id="valorAcaoProcesso"),
             lawsuit_class=soup.find(id="classeProcesso"),
             subject=soup.find(id="assuntoProcesso"),
             distribution=soup.find(id="dataHoraDistribuicaoProcesso"),
-            judge=soup.find(id="juizProcesso"),
+            judge=judge if judge else soup.find(id="orgaoJulgadorProcesso"),
+            area=soup.find(id="areaProcesso"),
             concerned_parties_table=soup.find(id="tableTodasPartes"),
             progress_table=soup.find(id="tabelaTodasMovimentacoes"),
         )
 
         return LINE_STATUS.SUCCESS, refined_lawsuit
+
+    def get_second_instance_session_and_codes(
+        self, url
+    ) -> Union[Tuple[str, list], bool]:
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+
+            session = None
+            for cookie in response.cookies:
+                if "sessionid" in cookie.name.lower():
+                    session = cookie.value
+
+            if not session:
+                raise Exception("Failed to capture session_id")
+
+            codes = []
+            soup = BeautifulSoup(response.text, features="html.parser")
+            for code in soup.find_all(id="processoSelecionado"):
+                codes.append(code.get("value"))
+
+            return session, codes
+        except Exception as e:
+            raise CreateSessionFailedException(e)
