@@ -1,6 +1,6 @@
 from enum import Enum
 
-CNJ_REGEX_PATTERN = r"[0-9]{7}-[0-9]{2}.[0-9]{4}.([0-9].[0-9]{2}).[0-9]{4}"
+CNJ_REGEX_PATTERN = r"\d{7}-?\d{2}.\d{4}.(\d.\d{2}).\d{4}"
 
 
 class CNJ_UF_IDENTIFIER(Enum):
