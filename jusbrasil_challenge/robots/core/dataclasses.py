@@ -16,6 +16,7 @@ class RefinedLawsuitData:
     lawsuit_class: Union[Tag, NavigableString, None] = ""
     subject: Union[Tag, NavigableString, None] = ""
     distribution: Union[Tag, NavigableString, None] = ""
+    area: Union[Tag, NavigableString, None] = ""
     judge: Union[Tag, NavigableString, None] = ""
     concerned_parties_table: Union[Tag, NavigableString, None] = ""
     progress_table: Union[Tag, NavigableString, None] = ""
@@ -26,6 +27,7 @@ class RefinedLawsuitData:
         lawsuit_class,
         subject,
         distribution,
+        area,
         judge,
         concerned_parties_table,
         progress_table,
@@ -37,6 +39,7 @@ class RefinedLawsuitData:
         self.lawsuit_class = self.get_bs_text(lawsuit_class)
         self.subject = self.get_bs_text(subject)
         self.distribution = self.get_bs_text(distribution)
+        self.area = self.get_bs_text(area)
         self.judge = self.get_bs_text(judge)
         self.concerned_parties_table = self.get_concerned_parties(
             concerned_parties_table
