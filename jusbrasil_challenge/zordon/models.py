@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 
 from .constants import LINE_STATUS
 from robots.core.constants import ROBOTS_HANDLER_MAP
+from robots.core.dataclasses import RefinedLawsuitData
 
 
 class BatchGenerator(models.Model):
@@ -67,3 +68,17 @@ class BatchConsultation(models.Model):
         BatchGenerator, on_delete=models.CASCADE, related_name="consultation"
     )
     public = models.BooleanField(default=False)
+
+
+class Lawsuit(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    batch_line = models.ForeignKey(
+        BatchLine, on_delete=models.CASCADE, related_name="lawsuits"
+    )
+    instance = models.SmallIntegerField()
+    value = models.TextField(null=True)
+    lawsuit_class = models.TextField(null=True)
+    subject = models.TextField(null=True)
+    distribution = models.TextField(null=True)
+    area = models.TextField(null=True)
+    judge = models.TextField(null=True)
