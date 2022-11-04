@@ -17,3 +17,11 @@ class BaseCaptureException(Exception):
     def build_message(self, error: str) -> dict:
         message: str = f"An error occurred while capturing the lawsuit: {error}"
         return json.loads(ErrorMessage(description=message, type=self.name).to_json())
+
+
+class CreateSessionFailedException(BaseCaptureException):
+    name: str = "CreateSessionFailedError"
+
+    def build_message(self, error: str) -> dict:
+        message: str = f"Unable to create page session: {error}"
+        return json.loads(ErrorMessage(description=message, type=self.name).to_json())
