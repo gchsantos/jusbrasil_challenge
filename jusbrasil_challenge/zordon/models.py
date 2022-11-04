@@ -49,11 +49,16 @@ class BatchLine(models.Model):
     status = models.SmallIntegerField(
         choices=LINE_STATUS.get_status(), default=LINE_STATUS.PENDING
     )
+    details = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True)
 
     def get_line_status(self) -> LINE_STATUS:
         return LINE_STATUS(self.status).name
+
+    def update_status(self, status: LINE_STATUS):
+        self.status = status
+        self.save()
 
 
 class BatchConsultation(models.Model):
