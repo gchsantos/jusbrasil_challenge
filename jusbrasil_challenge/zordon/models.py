@@ -82,3 +82,27 @@ class Lawsuit(models.Model):
     distribution = models.TextField(null=True)
     area = models.TextField(null=True)
     judge = models.TextField(null=True)
+
+
+class LawsuitProgress(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    lawsuit = models.ForeignKey(
+        Lawsuit, on_delete=models.CASCADE, related_name="movements"
+    )
+    date = models.TextField(null=True)
+    description = models.TextField(null=True)
+
+
+class LawsuitPart(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    lawsuit = models.ForeignKey(Lawsuit, on_delete=models.CASCADE, related_name="parts")
+    participation = models.TextField(null=True)
+    person = models.TextField(null=True)
+
+
+class LawsuitRelatedPart(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    related_part = models.ForeignKey(
+        LawsuitPart, on_delete=models.CASCADE, related_name="related_parts"
+    )
+    person = models.TextField(null=True)
