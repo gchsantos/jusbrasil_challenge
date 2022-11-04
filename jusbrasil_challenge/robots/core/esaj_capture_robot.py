@@ -108,6 +108,8 @@ class EsajCaptureRobot:
             return LINE_STATUS.NOT_FOUND, None
 
         judge = soup.find(id="juizProcesso")
+        parties_table = soup.find(id="tableTodasPartes")
+        progress_table = soup.find(id="tabelaTodasMovimentacoes")
 
         refined_lawsuit = RefinedLawsuitData(
             value=soup.find(id="valorAcaoProcesso"),
@@ -116,8 +118,12 @@ class EsajCaptureRobot:
             distribution=soup.find(id="dataHoraDistribuicaoProcesso"),
             judge=judge if judge else soup.find(id="orgaoJulgadorProcesso"),
             area=soup.find(id="areaProcesso"),
-            concerned_parties_table=soup.find(id="tableTodasPartes"),
-            progress_table=soup.find(id="tabelaTodasMovimentacoes"),
+            concerned_parties_table=parties_table
+            if parties_table
+            else soup.find(id="tablePartesPrincipais"),
+            progress_table=progress_table
+            if progress_table
+            else soup.find("tabelaUltimasMovimentacoes"),
         )
 
         return LINE_STATUS.SUCCESS, refined_lawsuit
