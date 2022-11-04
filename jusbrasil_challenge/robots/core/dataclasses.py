@@ -1,5 +1,5 @@
 import re
-from typing import Union
+from typing import Union, List
 
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
@@ -7,6 +7,21 @@ from bs4 import Tag, NavigableString
 
 value_pattern = re.compile(r"R\$\W*([\d, \W]*)")
 part_lawyer_pattern = re.compile(r"adv\w*:", re.IGNORECASE)
+
+
+@dataclass_json
+@dataclass
+class LawsuitProgress:
+    date: str
+    description: str
+
+
+@dataclass_json
+@dataclass
+class LawsuitConcernedParts:
+    participation: str
+    person: str
+    lawyers: List[str]
 
 
 @dataclass_json
@@ -41,10 +56,10 @@ class RefinedLawsuitData:
         self.distribution = self.get_bs_text(distribution)
         self.area = self.get_bs_text(area)
         self.judge = self.get_bs_text(judge)
-        self.concerned_parties_table = self.get_concerned_parties(
-            concerned_parties_table
-        )
-        self.progress_table = self.get_progress(progress_table)
+        self.concerned_parties_table: List[
+            LawsuitConcernedParts
+        ] = self.get_concerned_parties(concerned_parties_table)
+        self.progress_table: List[LawsuitProgress] = self.get_progress(progress_table)
 
     def get_concerned_parties(self, concerned_parties_table):
         concerned_parties = []
@@ -63,23 +78,23 @@ class RefinedLawsuitData:
 
                     if splitted_parts:
                         concerned_parties.append(
-                            {
-                                "participation": participation,
-                                "person": splitted_parts.pop(0),
-                                "lawyers": splitted_parts if splitted_parts else [],
-                            }
+                            LawsuitConcernedParts(
+                                participation=participation,
+                                person=splitted_parts.pop(0),
+                                lawyers=splitted_parts if splitted_parts else [],
+                            )
                         )
                     else:
                         concerned_parties.append(
-                            {
-                                "participation": participation,
-                                "person": part_and_lawyer.get_text(strip=True),
-                                "lawyers": "",
-                            }
+                            LawsuitConcernedParts(
+                                participation=participation,
+                                person=part_and_lawyer.get_text(strip=True),
+                                lawyers="",
+                            )
                         )
         return concerned_parties
 
-    def get_progress(self, progress_table):
+    def get_progress(self, progress_table) -> List[LawsuitProgress]:
         progress = []
         if progress_table:
             for row in progress_table.findAll("tr", {"class": "containerMovimentacao"}):
@@ -97,12 +112,10 @@ class RefinedLawsuitData:
                 )
 
                 progress.append(
-                    {
-                        "date": progress_date,
-                        "description": progress_description.replace("\r", " ").replace(
-                            "\n", ""
-                        ),
-                    }
+                    LawsuitProgress(
+                        progress_date,
+                        progress_description.replace("\r", " ").replace("\n", ""),
+                    ),
                 )
 
         return progress
