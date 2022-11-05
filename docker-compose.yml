@@ -6,11 +6,8 @@ services:
     restart: always
     volumes:
       - "postgres-data:/var/lib/postgresql/data"
-    environment:
-      POSTGRES_USER: gchsantos
-      POSTGRES_PASSWORD: itawesome
-      POSTGRES_DB: jusbrasil_challenge
-      TZ: GMT+3
+    env_file:
+      - .env
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U gchsantos -d postgres" ]
       interval: 10s
@@ -36,9 +33,8 @@ services:
     image: 'rabbitmq:3-management'
     volumes:
       - "rabbitmq-data:/var/lib/rabbitmq"
-    environment:
-      - RABBITMQ_DEFAULT_USER=gchsantos
-      - RABBITMQ_DEFAULT_PASS=itawesome
+    env_file:
+      - .env
     ports:
       - '5672:5672'
       - '15672:15672'
@@ -49,6 +45,38 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
+  celery_worker_al:
+    build:
+      context: .
+    image: jusbrasil_challenge
+    command: 'celery -A jusbrasil_challenge worker -Q batch_al -l INFO'
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: jusbrasil_challenge.settings.production
+      MODE: PROD
+    networks:
+      - back-tier
+    depends_on:
+      - rabbitmq
+      - postgres
+
+  celery_worker_ce:
+    build:
+      context: .
+    image: jusbrasil_challenge
+    command: 'celery -A jusbrasil_challenge worker -Q batch_ce -l INFO'
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: jusbrasil_challenge.settings.production
+      MODE: PROD
+    networks:
+      - back-tier
+    depends_on:
+      - rabbitmq
+      - postgres
 
 volumes:
   postgres-data:

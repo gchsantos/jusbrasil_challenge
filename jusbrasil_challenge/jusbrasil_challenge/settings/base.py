@@ -1,22 +1,25 @@
-import environ
+import os
+from os.path import dirname
+from pathlib import Path
 
+from dotenv import load_dotenv
+
+BASE_DIR = dirname(dirname(dirname(__file__)))
+ENV_DIR = dirname(dirname(dirname(dirname(__file__))))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = environ.Path(__file__) - 3
-
-# Initialise environment variables
-env = environ.Env()
-env.read_env(BASE_DIR(".env"))
+ENV = os.environ.get("MODE", "local")
+if ENV == "local":
+    load_dotenv(dotenv_path=Path(ENV_DIR + "/.local.env"))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 ALLOWED_HOSTS = []
 
 
@@ -72,10 +75,10 @@ WSGI_APPLICATION = "jusbrasil_challenge.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": env("DATABASE_NAME"),
-        "USER": env("DATABASE_USER"),
-        "PASSWORD": env("DATABASE_PASS"),
-        "HOST": env("DATABASE_HOST"),
+        "NAME": os.getenv("POSTGRES_DB"),
+        "USER": os.getenv("POSTGRES_USER"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+        "HOST": os.getenv("DATABASE_HOST"),
     }
 }
 
@@ -128,12 +131,16 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser"),
 }
 
+MQ_USER = os.getenv("RABBITMQ_DEFAULT_USER")
+MQ_PASS = os.getenv("RABBITMQ_DEFAULT_PASS")
+MQ_HOST = os.getenv("RABBITMQ_HOST")
+
 MQ_SETTINGS = {
-    "host": env("MQ_HOST"),
-    "port": env("MQ_PORT", default="5672"),
+    "host": MQ_HOST,
+    "port": os.getenv("RABBITMQ_PORT", default="5672"),
     "credentials": {
-        "user": env("MQ_USER"),
-        "password": env("MQ_PASS"),
+        "user": MQ_USER,
+        "password": MQ_PASS,
     },
 }
 
@@ -142,7 +149,7 @@ CELERY_CACHE_BACKEND = "django-cache"
 CELERY_TIMEZONE = "America/Sao_Paulo"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
-CELERY_BROKER_URL = f'amqp://{MQ_SETTINGS["credentials"]["user"]}:{MQ_SETTINGS["credentials"]["password"]}@{MQ_SETTINGS["host"]}//'
+CELERY_BROKER_URL = f"amqp://{MQ_USER}:{MQ_PASS}@{MQ_HOST}//"
 CELERY_TASK_RESULT_EXPIRES = 18000
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
