@@ -1,7 +1,4 @@
-FROM python:3.9
-
-RUN apt-get upgrade -y
-RUN apt-get install -y git
+FROM python:3.9-alpine
 
 COPY .  /app 
 

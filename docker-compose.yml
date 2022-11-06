@@ -1,6 +1,25 @@
 version: '3'
 
 services:
+
+  api:
+    build:
+      context: .
+    image: jusbrasil_challenge
+    command: 'gunicorn jusbrasil_challenge.wsgi:application --bind 0.0.0.0:8000'
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: jusbrasil_challenge.settings.production
+      MODE: PROD
+    ports:
+      - 8000:8000
+    networks:
+      - back-tier
+    depends_on:
+      - rabbitmq
+      - postgres
+
   postgres:
     image: postgres:alpine
     restart: always
@@ -81,6 +100,8 @@ services:
 volumes:
   postgres-data:
   rabbitmq-data:
+  uwsgi_data:
+  web_static:
 
 
 networks:
