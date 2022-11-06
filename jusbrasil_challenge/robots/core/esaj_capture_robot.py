@@ -4,7 +4,6 @@ from typing import Tuple, Union, List, Dict
 from urllib3 import HTTPResponse
 from urllib3.util.ssl_ import create_urllib3_context
 
-import requests
 from bs4 import BeautifulSoup
 from celery.utils.log import get_task_logger
 
