@@ -1,6 +1,5 @@
 import json
 from typing import List, Dict
-from dataclasses import asdict
 
 from django.db import transaction
 from django.core.exceptions import ValidationError
@@ -32,9 +31,16 @@ class BatchManager(APIView):
 
     def post(self, request, **kwargs):
         try:
-            insert_message = from_dict(
-                data_class=BatchInsertDataMessage, data=request.data
-            )
+            try:
+                insert_message = from_dict(
+                    data_class=BatchInsertDataMessage, data=request.data
+                )
+            except MissingValueError as e:
+                return Response(
+                    MissingValueException(str(e)).message,
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             generator_cnjs: Dict[str, List[BatchLine]] = dict()
 
             for cnj in insert_message.cnjs:
@@ -67,11 +73,6 @@ class BatchManager(APIView):
             )
             return Response(return_message, status=status.HTTP_200_OK)
 
-        except MissingValueError as e:
-            return Response(
-                MissingValueException(str(e)).message,
-                status=status.HTTP_400_BAD_REQUEST,
-            )
         except Exception as e:
             return Response(
                 BaseException(str(e)).message,
