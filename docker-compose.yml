@@ -6,7 +6,7 @@ services:
     build:
       context: .
     image: jusbrasil_challenge
-    command: 'gunicorn jusbrasil_challenge.wsgi:application --bind 0.0.0.0:8000'
+    command: './start-server.sh'
     env_file:
       - .env
     environment:
