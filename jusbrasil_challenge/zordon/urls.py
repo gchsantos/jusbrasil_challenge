@@ -1,10 +1,10 @@
-from django.urls import path, re_path
+from django.urls import re_path
 
 from .views import BatchManager, ConsultationManager
 
 urlpatterns = [
-    path(
-        "",
+    re_path(
+        r"/?$",
         BatchManager.as_view(),
         name="Batch Manager",
     ),
