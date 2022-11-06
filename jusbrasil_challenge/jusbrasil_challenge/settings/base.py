@@ -5,7 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = dirname(dirname(dirname(__file__)))
-ENV_DIR = dirname(dirname(dirname(dirname(__file__))))
+ENV_DIR = dirname(BASE_DIR)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 ENV = os.environ.get("MODE", "local")

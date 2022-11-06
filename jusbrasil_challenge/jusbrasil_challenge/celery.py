@@ -1,7 +1,7 @@
 import os
 from celery import Celery
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "jusbrasil_challenge.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "jusbrasil_challenge.settings.base")
 
 app = Celery("jusbrasil_challenge")
 app.config_from_object("django.conf:settings", namespace="CELERY")
