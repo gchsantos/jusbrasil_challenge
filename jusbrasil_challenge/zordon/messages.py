@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from dataclasses_json import dataclass_json, LetterCase
 
 from jusbrasil_challenge.messages import ReturnBaseMessage
+from .serializers import BatchLinesSerializer
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
@@ -23,7 +24,7 @@ class BatchInsertDataMessage:
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
-class BatchInsertReturnDataMessage(ReturnBaseMessage):
+class BatchInsertDataReturnMessage(ReturnBaseMessage):
     consultation_id: str
 
     def __init__(self, consultation_id: str):
@@ -32,4 +33,32 @@ class BatchInsertReturnDataMessage(ReturnBaseMessage):
             type="BatchInsert",
             message="The solicitation was inserted in queue sucessfuly",
             description="Insertion of lawsuits in the robot's queue through the CNJ",
+        )
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL)
+@dataclass
+class BatchConsultationData:
+    ...
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL)
+@dataclass
+class BatchConsultationReturnMessage(ReturnBaseMessage):
+    consultation_id: str
+    batch_consultations: List[dict]
+
+    def __init__(self, consultation_id, batch_consultations=[]):
+        self.consultation_id = consultation_id
+        self.batch_consultations = batch_consultations
+
+        if self.batch_consultations:
+            self.message = "success capturing consultation information"
+        else:
+            self.message = "consultation_id was not found"
+
+        super().__init__(
+            type="BatchConsultation",
+            message=self.message,
+            description="Get batch's captured information through the consultation_id",
         )
