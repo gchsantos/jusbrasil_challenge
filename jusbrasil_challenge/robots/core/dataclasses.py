@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 from bs4 import Tag, NavigableString
 
-value_pattern = re.compile(r"R\$\W*([\d, \W]*)")
+value_pattern = re.compile(r"R?\$?\W*([\d, \W]+)")
 part_lawyer_pattern = re.compile(r"adv\w*:", re.IGNORECASE)
 
 
@@ -97,13 +97,24 @@ class RefinedLawsuitData:
     def get_progress(self, progress_table) -> List[LawsuitProgress]:
         progress = []
         if progress_table:
-            for row in progress_table.findAll("tr", {"class": "containerMovimentacao"}):
-                progress_date = row.find("td", {"class": "dataMovimentacao"})
+            rows = progress_table.findAll(
+                "tr", {"class": ["containerMovimentacao", "movimentacaoProcesso"]}
+            )
+            for row in rows:
+                progress_date = row.find(
+                    "td", {"class": ["dataMovimentacao", "dataMovimentacaoProcesso"]}
+                )
                 progress_date = (
                     progress_date.get_text(strip=True) if progress_date else ""
                 )
                 progress_description = row.find(
-                    "td", {"class": "descricaoMovimentacao"}
+                    "td",
+                    {
+                        "class": [
+                            "descricaoMovimentacao",
+                            "descricaoMovimentacaoProcesso",
+                        ]
+                    },
                 )
                 progress_description = (
                     progress_description.get_text(strip=True)
