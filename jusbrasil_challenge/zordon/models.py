@@ -110,12 +110,14 @@ class LawsuitGenerator(models.Model):
                 person=parts.person,
             )
 
-            bulk_lawyers = []
-            for lawyer in parts.lawyers:
-                bulk_lawyers.append(
-                    LawsuitRelatedPart(related_part=part, person=lawyer)
+            bulk_relateds = []
+            for participation, person in parts.relateds:
+                bulk_relateds.append(
+                    LawsuitRelatedPart(
+                        related_part=part, person=person, participation=participation
+                    )
                 )
-            LawsuitRelatedPart.objects.bulk_create(bulk_lawyers)
+            LawsuitRelatedPart.objects.bulk_create(bulk_relateds)
 
 
 class LawsuitProgress(models.Model):
@@ -139,6 +141,7 @@ class LawsuitPart(models.Model):
 class LawsuitRelatedPart(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     related_part = models.ForeignKey(
-        LawsuitPart, on_delete=models.CASCADE, related_name="related_parts"
+        LawsuitPart, on_delete=models.CASCADE, related_name="relateds"
     )
+    participation = models.TextField(null=True)
     person = models.TextField(null=True)

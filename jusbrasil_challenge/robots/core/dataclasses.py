@@ -6,7 +6,8 @@ from dataclasses_json import dataclass_json
 from bs4 import Tag, NavigableString
 
 value_pattern = re.compile(r"R?\$?\W*([\d, \W]+)")
-part_lawyer_pattern = re.compile(r"adv\w*:", re.IGNORECASE)
+part_pattern = re.compile(r"(\w.*)\s*.*:", re.IGNORECASE)
+related_pattern = re.compile(r"(\w.*):\s*(.*)", re.IGNORECASE)
 
 
 @dataclass_json
@@ -21,7 +22,7 @@ class LawsuitProgress:
 class LawsuitConcernedParts:
     participation: str
     person: str
-    lawyers: List[str]
+    relateds: List[tuple]
 
 
 @dataclass_json
@@ -72,16 +73,15 @@ class RefinedLawsuitData:
 
                 part_and_lawyer = row.find("td", {"class": "nomeParteEAdvogado"})
                 if part_and_lawyer:
-                    splitted_parts = re.split(
-                        part_lawyer_pattern, part_and_lawyer.get_text(strip=True)
-                    )
 
-                    if splitted_parts:
+                    part = re.search(part_pattern, part_and_lawyer.get_text())
+                    relateds = re.findall(related_pattern, part_and_lawyer.get_text())
+                    if part:
                         concerned_parties.append(
                             LawsuitConcernedParts(
                                 participation=participation,
-                                person=splitted_parts.pop(0),
-                                lawyers=splitted_parts if splitted_parts else [],
+                                person=part.group(1),
+                                relateds=relateds if relateds else [],
                             )
                         )
                     else:
@@ -89,7 +89,7 @@ class RefinedLawsuitData:
                             LawsuitConcernedParts(
                                 participation=participation,
                                 person=part_and_lawyer.get_text(strip=True),
-                                lawyers="",
+                                relateds=[],
                             )
                         )
         return concerned_parties
