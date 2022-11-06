@@ -1,5 +1,6 @@
 import uuid
 from typing import List, Dict
+from django.utils import timezone
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -52,13 +53,16 @@ class BatchLine(models.Model):
     )
     details = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    finished_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
 
     def get_line_status(self) -> LINE_STATUS:
         return LINE_STATUS(self.status).name
 
-    def update_status(self, status: LINE_STATUS):
+    def update_status(self, status: LINE_STATUS, details=None):
         self.status = status
+        self.updated_at = timezone.now()
+        if details:
+            self.details = details
         self.save()
 
 
