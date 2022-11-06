@@ -50,11 +50,13 @@ class EsajCaptureRobot:
                     session, codes = self.get_second_instance_session_and_codes(url)
                     headers = self.generate_headers(session)
 
-                    for code in codes:
-                        show_url = f"{instance['show_url']}{code}"
-                        search_response = self.get_lawsuit_by_show_url(
-                            show_url, headers
-                        )
+                    urls = (
+                        [f"{instance['show_url']}{code}" for code in codes]
+                        if codes
+                        else [f"{instance['url']}{cnj}"]
+                    )
+                    for url in urls:
+                        search_response = self.get_lawsuit_by_show_url(url, headers)
                         search_responses.append(
                             (
                                 instance["instance"],
@@ -120,7 +122,6 @@ class EsajCaptureRobot:
         ):
             return LINE_STATUS.NOT_FOUND, None
 
-        judge = soup.find(id="juizProcesso")
         parties_table = soup.find(id="tableTodasPartes")
         progress_table = soup.find(id="tabelaTodasMovimentacoes")
 
@@ -129,7 +130,7 @@ class EsajCaptureRobot:
             lawsuit_class=soup.find(id="classeProcesso"),
             subject=soup.find(id="assuntoProcesso"),
             distribution=soup.find(id="dataHoraDistribuicaoProcesso"),
-            judge=judge if judge else soup.find(id="orgaoJulgadorProcesso"),
+            judge=soup.find(id=["orgaoJulgadorProcesso", "juizProcesso"]),
             area=soup.find(id="areaProcesso"),
             concerned_parties_table=parties_table
             if parties_table
