@@ -54,7 +54,7 @@ class BatchConsultationReturnMessage(ReturnBaseMessage):
         if self.batch_consultations:
             self.message = "success capturing consultation information"
         else:
-            self.message = "consultation_id was not found"
+            self.message = "consultation was not found"
 
         super().__init__(
             type="BatchConsultation",
