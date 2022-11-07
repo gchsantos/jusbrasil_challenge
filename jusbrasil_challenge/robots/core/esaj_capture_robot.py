@@ -156,7 +156,7 @@ class EsajCaptureRobot:
                 raise Exception("Failed to capture session_id")
 
             codes = []
-            soup = BeautifulSoup(response.data.decode("utf-8"), features="html.parser")
+            soup = BeautifulSoup(response.data, features="html.parser")
             for code in soup.find_all(id="processoSelecionado"):
                 codes.append(code.get("value"))
 
