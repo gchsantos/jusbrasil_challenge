@@ -73,6 +73,9 @@ class BatchConsultation(models.Model):
     )
     public = models.BooleanField(default=False)
 
+    def has_lines(self) -> bool:
+        return bool(self.generator.lines.first())
+
 
 class LawsuitGenerator(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

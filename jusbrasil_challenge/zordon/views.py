@@ -22,6 +22,7 @@ from .exceptions import (
     MissingValueException,
     BaseException,
     BatchConsultationException,
+    UnauthorizedConsultationException,
 )
 from .utils.cnj_utils import get_uf_by_cnj
 
@@ -93,8 +94,11 @@ class ConsultationManager(APIView):
                 )
 
             try:
-                consultation = BatchConsultation.objects.get(id=consultation_id)
-            except ValidationError:
+                consultation = BatchConsultation.objects.get(id=str(consultation_id))
+                if not consultation.has_lines():
+                    raise BatchConsultation.DoesNotExist
+
+            except ValidationError as e:
                 raise BatchConsultationException(
                     f"'{consultation_id}' is not a valid UUID"
                 )
@@ -109,7 +113,10 @@ class ConsultationManager(APIView):
                     consultation.generator.lines.all(), many=True
                 )
             else:
-                ...
+                return Response(
+                    UnauthorizedConsultationException(consultation_id).message,
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
 
         except BatchConsultationException as e:
             return Response(
