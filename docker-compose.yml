@@ -17,8 +17,10 @@ services:
     networks:
       - back-tier
     depends_on:
-      - rabbitmq
-      - postgres
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   postgres:
     image: postgres:alpine
@@ -37,17 +39,6 @@ services:
     networks:
       - back-tier
 
-  adminer:
-    image: adminer
-    restart: always
-    depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - 8080:8080
-    networks:
-      - back-tier
-
   rabbitmq:
     image: 'rabbitmq:3-management'
     volumes:
@@ -60,10 +51,10 @@ services:
     networks:
       - back-tier
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:15672" ]
+      test: rabbitmq-diagnostics -q ping
       interval: 30s
-      timeout: 10s
-      retries: 5
+      timeout: 30s
+      retries: 3
 
   celery_worker_al:
     build:
