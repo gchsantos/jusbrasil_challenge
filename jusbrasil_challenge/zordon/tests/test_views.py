@@ -6,6 +6,12 @@ from django.contrib.auth.models import User
 
 from zordon.views import BatchManager, ConsultationManager
 from zordon.models import BatchConsultation, BatchGenerator, BatchLine
+from zordon.exceptions import (
+    UnsupportedCNJException,
+    UnauthorizedConsultationException,
+    MissingValueException,
+    BatchConsultationException,
+)
 
 
 class BatchManagerViewTest(TestCase):
@@ -46,6 +52,7 @@ class BatchManagerViewTest(TestCase):
 
         self.assertEqual(400, response.status_code)
         self.assertEqual(expected_error_type, response.data.get("type"))
+        self.assertRaises(UnsupportedCNJException)
 
     def test_post_missing_value_error(self):
         """
@@ -58,6 +65,7 @@ class BatchManagerViewTest(TestCase):
         response = self.view.post(self.request)
 
         self.assertEqual(400, response.status_code)
+        self.assertRaises(MissingValueException)
         self.assertEqual(expected_error_type, response.data.get("type"))
 
 
@@ -106,6 +114,7 @@ class ConsultationManagerViewTest(TestCase):
         self.assertEqual(400, response.status_code)
         self.assertEqual(expected_type, response.data.get("type"))
         self.assertEqual(expected_description, response.data.get("description"))
+        self.assertRaises(BatchConsultationException)
 
     def test_get_invalid_uuid(self):
         """
@@ -121,6 +130,7 @@ class ConsultationManagerViewTest(TestCase):
         self.assertEqual(400, response.status_code)
         self.assertEqual(expected_type, response.data.get("type"))
         self.assertEqual(expected_description, response.data.get("description"))
+        self.assertRaises(BatchConsultationException)
 
     def test_get_unauthorized_consultation(self):
         """
@@ -138,3 +148,4 @@ class ConsultationManagerViewTest(TestCase):
         self.assertEqual(401, response.status_code)
         self.assertEqual(expected_type, response.data.get("type"))
         self.assertEqual(expected_description, response.data.get("description"))
+        self.assertRaises(UnauthorizedConsultationException)
